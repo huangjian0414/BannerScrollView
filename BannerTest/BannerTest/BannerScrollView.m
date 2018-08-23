@@ -73,10 +73,8 @@
 -(void)addImageView
 {
     for (int i=0; i<3; i++) {
-        
         BannerImageView *bannerImgView=[[BannerImageView alloc]init];
-        [bannerImgView addTarget:self action:@selector(clickImg) forControlEvents:UIControlEventTouchUpInside];
-        [bannerImgView addTarget:self action:@selector(touchDownImg) forControlEvents:UIControlEventTouchDown];
+        [bannerImgView addTarget:self action:@selector(imgAction:forEvent:) forControlEvents:UIControlEventAllEvents];
         [self addSubview:bannerImgView];
         
         if (i==0) {
@@ -91,22 +89,18 @@
         }
     }
 }
--(void)touchDownImg
-{
-    [self removeTimer];
-}
--(void)clickImg
-{
-    [self startTimer];
-    if ([self.delegater respondsToSelector:@selector(didSelectedImage:)]) {
-        [self.delegater didSelectedImage:self.centerIndex];
+- (void)imgAction:(id)sender forEvent:(UIEvent *)event{
+    UITouchPhase phase = event.allTouches.anyObject.phase;
+    if (phase == UITouchPhaseBegan) {
+        NSLog(@"press");
+        [self removeTimer];
     }
-}
-
--(void)touchImg:(UIGestureRecognizer *)ges
-{
-    if ([self.delegater respondsToSelector:@selector(didSelectedImage:)]) {
-        [self.delegater didSelectedImage:self.centerIndex];
+    else if(phase == UITouchPhaseEnded){
+        NSLog(@"release");
+        [self startTimer];
+        if ([self.delegater respondsToSelector:@selector(didSelectedImage:)]) {
+            [self.delegater didSelectedImage:self.centerIndex];
+        }
     }
 }
 
