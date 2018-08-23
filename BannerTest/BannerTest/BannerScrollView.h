@@ -16,3 +16,10 @@
 
 @property(nonatomic,weak)id<BannerScrollViewDelegate> delegater;
 @end
+
+
+
+
+@interface BannerImageView : UIControl
+@property (nonatomic,weak)UIImageView *imgView;
+@end

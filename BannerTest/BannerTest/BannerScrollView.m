@@ -7,17 +7,17 @@
 //
 
 #import "BannerScrollView.h"
-
-@interface BannerScrollView ()<UIScrollViewDelegate>
-@property (nonatomic,weak)UIImageView *leftImgView;
-
-@property (nonatomic,weak)UIImageView *centerImgView;
-
-@property (nonatomic,weak)UIImageView *rightImgView;
+@interface BannerScrollView ()<UIScrollViewDelegate,UIGestureRecognizerDelegate>
 
 @property(nonatomic, assign)NSInteger centerIndex;
 
 @property(nonatomic,strong) NSTimer *timer;
+
+@property (nonatomic,weak)BannerImageView *leftImgView;
+
+@property (nonatomic,weak)BannerImageView *centerImgView;
+
+@property (nonatomic,weak)BannerImageView *rightImgView;
 @end
 @implementation BannerScrollView
 -(void)startBanner
@@ -45,6 +45,7 @@
 }
 -(void)runImage
 {
+    self.scrollEnabled=NO;
     CGPoint apoint = self.contentOffset;
     [self setContentOffset:CGPointMake(apoint.x+CGRectGetWidth(self.frame), 0) animated:YES];
 }
@@ -65,36 +66,50 @@
 -(void)setBannerImgArray:(NSArray *)bannerImgArray
 {
     _bannerImgArray=bannerImgArray;
-    self.leftImgView.image=bannerImgArray[bannerImgArray.count-1];
-    self.centerImgView.image=bannerImgArray[0];
-    self.rightImgView.image=bannerImgArray[1];
+    self.leftImgView.imgView.image=bannerImgArray[bannerImgArray.count-1];
+    self.centerImgView.imgView.image=bannerImgArray[0];
+    self.rightImgView.imgView.image=bannerImgArray[1];
 }
 -(void)addImageView
 {
     for (int i=0; i<3; i++) {
-        UIImageView *imgView=[[UIImageView alloc]init];
-        imgView.userInteractionEnabled=YES;
-        [self addSubview:imgView];
-        UITapGestureRecognizer *tap=[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(touchImg:)];
-        [imgView addGestureRecognizer:tap];
+        
+        BannerImageView *bannerImgView=[[BannerImageView alloc]init];
+        [bannerImgView addTarget:self action:@selector(clickImg) forControlEvents:UIControlEventTouchUpInside];
+        [bannerImgView addTarget:self action:@selector(touchDownImg) forControlEvents:UIControlEventTouchDown];
+        [self addSubview:bannerImgView];
+        
         if (i==0) {
-            self.leftImgView=imgView;
+            self.leftImgView=bannerImgView;
         }else if (i==1)
         {
             self.centerIndex=0;
-            self.centerImgView=imgView;
+            self.centerImgView=bannerImgView;
         }else
         {
-            self.rightImgView=imgView;
+            self.rightImgView=bannerImgView;
         }
     }
 }
+-(void)touchDownImg
+{
+    [self removeTimer];
+}
+-(void)clickImg
+{
+    [self startTimer];
+    if ([self.delegater respondsToSelector:@selector(didSelectedImage:)]) {
+        [self.delegater didSelectedImage:self.centerIndex];
+    }
+}
+
 -(void)touchImg:(UIGestureRecognizer *)ges
 {
     if ([self.delegater respondsToSelector:@selector(didSelectedImage:)]) {
         [self.delegater didSelectedImage:self.centerIndex];
     }
 }
+
 -(void)layoutSubviews
 {
     [super layoutSubviews];
@@ -107,6 +122,7 @@
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView
 {
     [self moveWithScrollView:scrollView];
+    self.scrollEnabled=YES;
 }
 //手动拖拽滚动完毕
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
@@ -145,10 +161,31 @@
     
     NSInteger rightIndex = self.centerIndex == self.bannerImgArray.count -1?0:self.centerIndex+1;
     
-    self.leftImgView.image = self.bannerImgArray[leftIndex];
+    self.leftImgView.imgView.image = self.bannerImgArray[leftIndex];
     
-    self.centerImgView.image = self.bannerImgArray[self.centerIndex];
+    self.centerImgView.imgView.image = self.bannerImgArray[self.centerIndex];
     
-    self.rightImgView.image = self.bannerImgArray[rightIndex];
+    self.rightImgView.imgView.image = self.bannerImgArray[rightIndex];
+    
+}
+@end
+
+@implementation BannerImageView
+-(instancetype)init
+{
+    if (self==[super init]) {
+        [self addImageView];
+    }
+    return self;
+}
+-(void)addImageView
+{
+    UIImageView *imageView=[[UIImageView alloc]init];
+    [self addSubview:imageView];
+    self.imgView=imageView;
+}
+-(void)layoutSubviews
+{
+    self.imgView.frame=self.bounds;
 }
 @end
